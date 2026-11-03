@@ -35,7 +35,7 @@ const CheckoutPopup = ({
                     <p>{item.name}</p>
                   </b>
                   <p>Quantity: {item.quantity}</p>
-                  <p>Price: ${item.price * item.quantity}</p>
+                  <p>Price: ₹{item.price * item.quantity}</p>
                 </div>
               </div>
             ))}
@@ -49,7 +49,7 @@ const CheckoutPopup = ({
                   fontWeight: "bold",
                 }}
               >
-                Total: ${totalPrice}
+                Total: ₹{totalPrice}
               </h5>
             </div>
           </div>
