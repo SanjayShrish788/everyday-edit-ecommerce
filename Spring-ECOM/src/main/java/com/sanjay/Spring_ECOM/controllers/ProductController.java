@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.List;
 
+/** Multipart catalog API; metadata and image uploads are separate request parts. */
 @RestController
 @RequestMapping("/api")
 @CrossOrigin
@@ -21,13 +22,13 @@ public class ProductController {
     @Autowired
     private ProductService productService;
 
-    // Get all products
+    /** Lists the catalog, including availability and stock quantities. */
     @GetMapping("/products")
     public ResponseEntity<List<Product>> getProducts() {
         return ResponseEntity.ok(productService.getAllProducts());
     }
 
-    // Get product by ID
+    /** Loads a product for its detail or edit screen; unknown IDs return HTTP 404. */
     @GetMapping("/product/{id}")
     public ResponseEntity<Product> getProductById(
             @PathVariable int id) {
@@ -41,7 +42,7 @@ public class ProductController {
         return ResponseEntity.notFound().build();
     }
 
-    // Add product
+    /** Accepts a JSON product part and an imageFile part, returning HTTP 201. */
     @PostMapping("/product")
     public ResponseEntity<?> addProduct(
             @RequestPart("product") Product product,
@@ -60,7 +61,7 @@ public class ProductController {
         }
     }
 
-    // Update product
+    /** Replaces product metadata and optionally its image, keeping the path ID authoritative. */
     @PutMapping("/product/{id}")
     public ResponseEntity<?> updateProduct(
             @PathVariable int id,
@@ -76,7 +77,7 @@ public class ProductController {
                         .body("Product not found");
             }
 
-            // Always update the existing product ID
+            // Never let a mismatched ID in the JSON body update a different row.
             product.setId((long) id);
 
             if (imageFile != null && !imageFile.isEmpty()) {
@@ -84,7 +85,7 @@ public class ProductController {
                 product.setImageType(imageFile.getContentType());
                 product.setImageData(imageFile.getBytes());
             } else {
-                // Preserve existing image
+                // A metadata-only edit must not erase the stored image bytes or MIME type.
                 product.setImageName(existingProduct.getImageName());
                 product.setImageType(existingProduct.getImageType());
                 product.setImageData(existingProduct.getImageData());
@@ -101,7 +102,7 @@ public class ProductController {
         }
     }
 
-    // Get product image
+    /** Streams stored image bytes with their MIME type; absent images return HTTP 404. */
     @GetMapping("/product/{productId}/image")
     public ResponseEntity<byte[]> getImageByProductId(
             @PathVariable int productId) {
@@ -122,7 +123,7 @@ public class ProductController {
         return ResponseEntity.notFound().build();
     }
 
-    // Delete product
+    /** Removes an existing product, or reports HTTP 404 when it is already absent. */
     @DeleteMapping("/product/{id}")
     public ResponseEntity<String> deleteProduct(
             @PathVariable int id) {
@@ -138,7 +139,7 @@ public class ProductController {
                 .body("Product not found");
     }
 
-    // Search products
+    /** Returns case-insensitive matches across the searchable catalog fields. */
     @GetMapping("/products/search")
     public ResponseEntity<List<Product>> searchProducts(
             @RequestParam String keyword) {

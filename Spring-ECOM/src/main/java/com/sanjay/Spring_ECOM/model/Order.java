@@ -27,6 +27,7 @@ public class Order {
 
     private LocalDate orderDate;
 
+    // Persisting or deleting an order cascades to its owned line items.
     @OneToMany(mappedBy = "order",cascade = CascadeType.ALL)
     private List<OrderItem> orderItems;
 }

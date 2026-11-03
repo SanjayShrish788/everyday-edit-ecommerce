@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/** HTTP adapters for order creation, history, and deletion. */
 @RestController
 @RequestMapping("/api")
 @CrossOrigin
@@ -20,6 +21,7 @@ public class OrderController {
     @Autowired
     private OrderService orderService;
 
+    /** Delegates inventory validation and order persistence to the transactional service. */
     @PostMapping("/orders/place")
     public ResponseEntity<OrderResponse> placeOrder(
             @RequestBody OrderRequest orderRequest) {
@@ -30,6 +32,7 @@ public class OrderController {
         return new ResponseEntity<>(orderResponse, HttpStatus.CREATED);
     }
 
+    /** Lists response DTOs instead of serializing bidirectional JPA relationships. */
     @GetMapping("/orders")
     public ResponseEntity<List<OrderResponse>> getAllOrders() {
 
@@ -40,6 +43,7 @@ public class OrderController {
                 orderResponseList, HttpStatus.OK);
     }
 
+    /** Uses the public order reference, returning HTTP 204 or HTTP 404. */
     @DeleteMapping("/orders/{orderId}")
     public ResponseEntity<Void> deleteOrder(
             @PathVariable String orderId) {

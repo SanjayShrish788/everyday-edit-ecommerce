@@ -24,6 +24,7 @@ public class OrderItem {
 
     private int quantity;
 
+    // Price times quantity at checkout, retained independently of later catalog edits.
     private BigDecimal totalPrice;
 
     @ManyToOne(fetch = FetchType.LAZY)

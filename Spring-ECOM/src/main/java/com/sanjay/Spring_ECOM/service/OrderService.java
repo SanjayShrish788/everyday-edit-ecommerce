@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/** Builds persisted orders and response DTOs without exposing entity relationships. */
 @Service
 public class OrderService {
 
@@ -30,6 +31,11 @@ public class OrderService {
     @Autowired
     private OrderRepo orderRepo;
 
+    /**
+     * Validates quantities, decrements inventory, and saves the order in one transaction.
+     * An exception rolls back earlier stock changes in this request. This transaction
+     * does not lock inventory rows against concurrent checkout requests.
+     */
     @Transactional
     public OrderResponse placeOrder(OrderRequest request) {
 
@@ -40,7 +46,7 @@ public class OrderService {
                         .substring(0, 8).toUpperCase();
 
         order.setOrderId(orderId);
-        order.setCustomerName(request.customerName()); //setters and getters is done -> @Data by lombok
+        order.setCustomerName(request.customerName());
         order.setEmail(request.email());
         order.setStatus("PLACED");
         order.setOrderDate(LocalDate.now());
@@ -70,6 +76,7 @@ public class OrderService {
 
             productRepo.save(product);
 
+            // Snapshot the line total so later catalog price edits do not change this order.
             OrderItem orderItem = OrderItem.builder()
                     .product(product)
                     .quantity(itemReq.quantity())
@@ -106,6 +113,7 @@ public class OrderService {
         );
     }
 
+    /** Maps order items while the read transaction keeps lazy relationships accessible. */
     @Transactional(readOnly = true)
     public List<OrderResponse> getAllOrderResponses() {
 
@@ -137,6 +145,7 @@ public class OrderService {
         return orderResponses;
     }
 
+    /** Uses the saved line total, with a calculated fallback for older order rows. */
     private BigDecimal getItemTotal(OrderItem item) {
 
         if (item.getTotalPrice() != null) {
@@ -152,6 +161,7 @@ public class OrderService {
         return BigDecimal.ZERO;
     }
 
+    /** Deletes an order if present. Deleting history does not restock its products. */
     @Transactional
     public boolean deleteOrder(String orderId) {
 
