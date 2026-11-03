@@ -1,0 +1,23 @@
+# Build output and installed dependencies
+**/node_modules/
+**/target/
+**/dist/
+**/dist-ssr/
+
+# Machine-local settings, secrets, and editor state
+**/.idea/
+**/.vscode/
+**/.env
+**/.env.*
+!**/.env.example
+**/application-local.properties
+*.log
+.DS_Store
+Thumbs.db
+
+# Database snapshots and downloaded maintenance assets
+catalog-maintenance/catalog-before.json
+catalog-maintenance/catalog-after.json
+catalog-maintenance/before-*
+catalog-maintenance/images/
+**/__pycache__/

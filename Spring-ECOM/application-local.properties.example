@@ -1,0 +1,4 @@
+# Copy to application-local.properties and set your local PostgreSQL credentials.
+spring.datasource.url=jdbc:postgresql://localhost:5432/sanjay
+spring.datasource.username=postgres
+spring.datasource.password=replace-with-your-local-password
