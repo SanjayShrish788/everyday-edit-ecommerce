@@ -1,8 +1,12 @@
-# React + Vite
+# Everyday Edit frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React and Vite storefront for Everyday Edit.
 
-Currently, two official plugins are available:
+```sh
+npm ci
+npm run dev
+```
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Open http://localhost:5173. The backend defaults to http://localhost:8081/api. Copy `.env.example` to `.env` to override `VITE_API_BASE_URL`, then restart Vite.
+
+Run `npm run build` to produce `dist/`. See the [project README](../../README.md) for PostgreSQL setup, backend commands, catalog import, architecture, and current limitations.
