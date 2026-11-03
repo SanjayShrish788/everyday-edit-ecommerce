@@ -1,243 +1,215 @@
-import { API_BASE_URL } from "../axios";
-import React, { useContext, useState, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  FiArrowRight,
+  FiMinus,
+  FiPlus,
+  FiShoppingBag,
+  FiTrash2,
+} from "react-icons/fi";
+import API, { API_BASE_URL } from "../axios";
 import AppContext from "../Context/Context";
-import axios from "axios";
 import CheckoutPopup from "./CheckoutPopup";
-import { Button } from "react-bootstrap";
 
-/** Displays API-backed bag images and the current inventory-update checkout. */
+const money = (value) =>
+  new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(
+    value,
+  );
 
-const Cart = () => {
-  const { cart, removeFromCart, clearCart } = useContext(AppContext);
-  const [cartItems, setCartItems] = useState([]);
-  const [totalPrice, setTotalPrice] = useState(0);
-  const [cartImage, setCartImage] = useState([]);
+/** Uses current catalog prices and submits one OrderRequest instead of editing products. */
+export default function Cart() {
+  const { cart, removeFromCart, clearCart, setCartQuantity, refreshData } =
+    useContext(AppContext);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [checkoutError, setCheckoutError] = useState("");
+  const navigate = useNavigate();
 
+  /** Refresh stock and price from the API; localStorage only supplies IDs and quantities. */
   useEffect(() => {
-    /** Excludes deleted products and attaches browser image URLs to bag lines. */
-    const fetchImagesAndUpdateCart = async () => {
-      console.log("Cart", cart);
-      try {
-        const response = await axios.get(`${API_BASE_URL}/products`);
-        const backendProductIds = response.data.map((product) => product.id);
-
-        const updatedCartItems = cart.filter((item) =>
-          backendProductIds.includes(item.id),
-        );
-        const cartItemsWithImages = await Promise.all(
-          updatedCartItems.map(async (item) => {
-            try {
-              const response = await axios.get(
-                `${API_BASE_URL}/product/${item.id}/image`,
-                { responseType: "blob" },
-              );
-              const imageFile = await converUrlToFile(
-                response.data,
-                response.data.imageName,
-              );
-              setCartImage(imageFile);
-              const imageUrl = URL.createObjectURL(response.data);
-              return { ...item, imageUrl };
-            } catch (error) {
-              console.error("Error fetching image:", error);
-              return { ...item, imageUrl: "placeholder-image-url" };
-            }
-          }),
-        );
-        console.log("cart", cart);
-        setCartItems(cartItemsWithImages);
-      } catch (error) {
-        console.error("Error fetching product data:", error);
-      }
+    let active = true;
+    API.get("/products")
+      .then(({ data }) => {
+        if (active) setProducts(data);
+      })
+      .catch(() => {
+        if (active)
+          setLoadError(
+            "We couldn’t load current prices and stock. Refresh to try again.",
+          );
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
     };
+  }, []);
 
-    if (cart.length) {
-      fetchImagesAndUpdateCart();
-    }
-  }, [cart]);
+  const items = cart.map((line) => {
+    const product = products.find((p) => p.id === line.id);
+    return { ...line, ...product, quantity: line.quantity, missing: !product };
+  });
+  const invalid = items.some(
+    (p) => p.missing || !p.productAvailable || p.stockQuantity < p.quantity,
+  );
+  const total = items.reduce((sum, p) => sum + Number(p.price) * p.quantity, 0);
 
-  useEffect(() => {
-    const total = cartItems.reduce(
-      (acc, item) => acc + item.price * item.quantity,
-      0,
-    );
-    setTotalPrice(total);
-  }, [cartItems]);
-
-  /** Wraps image bytes in a File for the existing multipart checkout flow. */
-
-  const converUrlToFile = async (blobData, fileName) => {
-    const file = new File([blobData], fileName, { type: blobData.type });
-    return file;
-  };
-
-  /** Caps displayed quantity at the stock captured for this bag line. */
-
-  const handleIncreaseQuantity = (itemId) => {
-    const newCartItems = cartItems.map((item) => {
-      if (item.id === itemId) {
-        if (item.quantity < item.stockQuantity) {
-          return { ...item, quantity: item.quantity + 1 };
-        } else {
-          alert("Cannot add more than available stock");
-        }
-      }
-      return item;
-    });
-    setCartItems(newCartItems);
-  };
-
-  /** Keeps displayed quantity at a minimum of one. */
-
-  const handleDecreaseQuantity = (itemId) => {
-    const newCartItems = cartItems.map((item) =>
-      item.id === itemId
-        ? { ...item, quantity: Math.max(item.quantity - 1, 1) }
-        : item,
-    );
-    setCartItems(newCartItems);
-  };
-
-  /** Removes the line from shared bag state and this screen. */
-
-  const handleRemoveFromCart = (itemId) => {
-    removeFromCart(itemId);
-    const newCartItems = cartItems.filter((item) => item.id !== itemId);
-    setCartItems(newCartItems);
-  };
-
-  /** Updates stock using separate product requests, then clears the bag. This legacy flow does not call /orders/place, collect payment, or create an atomic order transaction. */
-
-  const handleCheckout = async () => {
+  /** Matches OrderRequest: customerName, email, and productId/quantity pairs only. */
+  const handleCheckout = async ({ customerName, email }) => {
+    if (submitting) return;
+    setSubmitting(true);
+    setCheckoutError("");
     try {
-      for (const item of cartItems) {
-        const { imageUrl, imageName, imageData, imageType, quantity, ...rest } =
-          item;
-        const updatedStockQuantity = item.stockQuantity - item.quantity;
-
-        const updatedProductData = {
-          ...rest,
-          stockQuantity: updatedStockQuantity,
-        };
-        console.log("updated product data", updatedProductData);
-
-        const cartProduct = new FormData();
-        cartProduct.append("imageFile", cartImage);
-        cartProduct.append(
-          "product",
-          new Blob([JSON.stringify(updatedProductData)], {
-            type: "application/json",
-          }),
-        );
-
-        await axios
-          .put(`${API_BASE_URL}/product/${item.id}`, cartProduct, {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          })
-          .then((response) => {
-            console.log("Product updated successfully:", cartProduct);
-          })
-          .catch((error) => {
-            console.error("Error updating product:", error);
-          });
-      }
+      const { data: order } = await API.post("/orders/place", {
+        customerName: customerName.trim(),
+        email: email.trim(),
+        items: items.map((p) => ({ productId: p.id, quantity: p.quantity })),
+      });
+      // Only clear the bag after the transaction succeeds; keep it intact on any failure.
       clearCart();
-      setCartItems([]);
-      setShowModal(false);
+      refreshData();
+      navigate("/orders", { state: { placedOrderId: order.orderId } });
     } catch (error) {
-      console.log("error during checkout", error);
+      const body = error.response?.data;
+      setCheckoutError(
+        typeof body === "string"
+          ? body
+          : body?.message ||
+              "Your order could not be placed. Check available stock and try again. Your bag has been kept.",
+      );
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <div className="cart-container">
-      <div className="shopping-cart">
-        <div className="title">Shopping Bag</div>
-        {cartItems.length === 0 ? (
-          <div className="empty" style={{ textAlign: "left", padding: "2rem" }}>
-            <h4>Your cart is empty</h4>
-          </div>
-        ) : (
-          <>
-            {cartItems.map((item) => (
-              <li key={item.id} className="cart-item">
-                <div
-                  className="item"
-                  style={{ display: "flex", alignContent: "center" }}
-                  key={item.id}
-                >
-                  <div>
-                    <img
-                      src={item.imageUrl}
-                      alt={item.name}
-                      className="cart-item-image"
-                    />
-                  </div>
-                  <div className="description">
-                    <span>{item.brand}</span>
-                    <span>{item.name}</span>
-                  </div>
-
-                  <div className="quantity">
-                    <button
-                      className="plus-btn"
-                      type="button"
-                      name="button"
-                      onClick={() => handleIncreaseQuantity(item.id)}
-                    >
-                      <i className="bi bi-plus-square-fill"></i>
-                    </button>
-                    <input
-                      type="button"
-                      name="name"
-                      value={item.quantity}
-                      readOnly
-                    />
-                    <button
-                      className="minus-btn"
-                      type="button"
-                      name="button"
-                      onClick={() => handleDecreaseQuantity(item.id)}
-                    >
-                      <i className="bi bi-dash-square-fill"></i>
-                    </button>
-                  </div>
-
-                  <div className="total-price " style={{ textAlign: "center" }}>
-                    ₹{item.price * item.quantity}
-                  </div>
+    <main className="commerce-page">
+      <div className="eyebrow">YOUR EVERYDAY FINDS</div>
+      <div className="commerce-heading">
+        <h1>
+          Shopping bag<span>.</span>
+        </h1>
+        <Link to="/">
+          Continue shopping <FiArrowRight />
+        </Link>
+      </div>
+      {loading ? (
+        <p role="status">Loading your bag…</p>
+      ) : loadError ? (
+        <div className="commerce-message" role="alert">
+          {loadError}
+        </div>
+      ) : !items.length ? (
+        <div className="store-empty">
+          <FiShoppingBag />
+          <h3>Your next favorite is waiting.</h3>
+          <p>Add a little everyday good to your bag.</p>
+          <Link className="shop-cta" to="/">
+            Explore the collection <FiArrowRight />
+          </Link>
+        </div>
+      ) : (
+        <div className="bag-layout">
+          <div className="bag-lines">
+            {items.map((item) => (
+              <article className="bag-line" key={item.id}>
+                <img
+                  src={`${API_BASE_URL}/product/${item.id}/image`}
+                  alt={item.name}
+                />
+                <div className="bag-product">
+                  <small>{item.brand}</small>
+                  <Link to={`/product/${item.id}`}>
+                    <h2>{item.name}</h2>
+                  </Link>
+                  <span>{money(item.price)} each</span>
+                  {(item.missing ||
+                    !item.productAvailable ||
+                    item.stockQuantity < item.quantity) && (
+                    <p className="commerce-error">
+                      {item.missing
+                        ? "This product is no longer available. Remove it to continue."
+                        : `Only ${item.stockQuantity} available. Adjust your bag to continue.`}
+                    </p>
+                  )}
+                </div>
+                <div className="bag-quantity">
                   <button
-                    className="remove-btn"
-                    onClick={() => handleRemoveFromCart(item.id)}
+                    aria-label={`Decrease ${item.name}`}
+                    disabled={item.quantity <= 1 || submitting}
+                    onClick={() => setCartQuantity(item.id, item.quantity - 1)}
                   >
-                    <i className="bi bi-trash3-fill"></i>
+                    <FiMinus />
+                  </button>
+                  <span>{item.quantity}</span>
+                  <button
+                    aria-label={`Increase ${item.name}`}
+                    disabled={
+                      item.missing ||
+                      item.quantity >= item.stockQuantity ||
+                      submitting
+                    }
+                    onClick={() => setCartQuantity(item.id, item.quantity + 1)}
+                  >
+                    <FiPlus />
                   </button>
                 </div>
-              </li>
+                <strong>{money(item.price * item.quantity)}</strong>
+                <button
+                  className="bag-remove"
+                  aria-label={`Remove ${item.name}`}
+                  disabled={submitting}
+                  onClick={() => removeFromCart(item.id)}
+                >
+                  <FiTrash2 />
+                </button>
+              </article>
             ))}
-            <div className="total">Total: ₹{totalPrice}</div>
-            <Button
-              className="btn btn-primary"
-              style={{ width: "100%" }}
-              onClick={() => setShowModal(true)}
+          </div>
+          <aside className="bag-summary">
+            <div className="eyebrow">THE GOOD STUFF, TOGETHER</div>
+            <h2>Order summary</h2>
+            <div>
+              <span>Items</span>
+              <span>{items.reduce((sum, p) => sum + p.quantity, 0)}</span>
+            </div>
+            <div className="bag-total">
+              <span>Total</span>
+              <strong>{money(total)}</strong>
+            </div>
+            <p>
+              Name and email are collected at checkout. Your order date and
+              reference are assigned when the order is saved.
+            </p>
+            <button
+              className="shop-cta"
+              disabled={invalid || submitting}
+              onClick={() => {
+                setCheckoutError("");
+                setShowModal(true);
+              }}
             >
-              Checkout
-            </Button>
-          </>
-        )}
-      </div>
+              Checkout <FiArrowRight />
+            </button>
+            <small>No payment is collected in this demo.</small>
+          </aside>
+        </div>
+      )}
       <CheckoutPopup
         show={showModal}
-        handleClose={() => setShowModal(false)}
-        cartItems={cartItems}
-        totalPrice={totalPrice}
+        handleClose={() => {
+          if (!submitting) setShowModal(false);
+        }}
+        cartItems={items}
+        totalPrice={total}
         handleCheckout={handleCheckout}
+        submitting={submitting}
+        error={checkoutError}
       />
-    </div>
+    </main>
   );
-};
-
-export default Cart;
+}

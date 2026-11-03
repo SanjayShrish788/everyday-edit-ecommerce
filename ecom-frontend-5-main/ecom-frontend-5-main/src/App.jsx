@@ -5,6 +5,7 @@ import { useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "./components/Home";
 import Navbar from "./components/Navbar";
+import Orders from "./components/Orders";
 import Cart from "./components/Cart";
 import AddProduct from "./components/AddProduct";
 import Product from "./components/Product";
@@ -21,6 +22,7 @@ export default function App() {
         <Route path="/product" element={<Product />} />
         <Route path="/product/:id" element={<Product />} />
         <Route path="/cart" element={<Cart />} />
+        <Route path="/orders" element={<Orders />} />
         <Route path="/product/update/:id" element={<UpdateProduct />} />
       </Routes>
     </BrowserRouter>

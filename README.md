@@ -9,7 +9,8 @@ A full-stack ecommerce storefront built with **React, Spring Boot, and PostgreSQ
 - Responsive storefront with category filters, text search, price sorting, and INR pricing.
 - Product detail, create, edit, and delete screens.
 - Multipart image uploads stored permanently in PostgreSQL, rather than browser storage or remote image links.
-- A shopping bag persisted in localStorage with quantity controls and a confirmation dialog.
+- A shopping bag persisted in localStorage with quantity controls and checkout that collects customer name and email.
+- Saved order history with server-assigned order references, dates, status, item quantities, and INR totals.
 - Backend order APIs with stock validation, transactional inventory updates, and saved line totals.
 - Repeatable catalog maintenance script for a 13-product demonstration collection.
 - GitHub Actions jobs for the frontend production build and backend verification against PostgreSQL.
@@ -116,6 +117,6 @@ See the [API reference](docs/API.md) and [architecture notes](docs/ARCHITECTURE.
 
 This is a local development and portfolio project. It does not implement authentication, payments, shipping, or production deployment. Product-management endpoints are currently open and CORS is unrestricted.
 
-The bag confirmation flow currently updates product inventory directly. It does **not** submit to the order API or create an order record. The backend exposes a separate transactional `/api/orders/place` endpoint. Concurrent stock updates are not protected with inventory locks, and the legacy bag flow makes separate product requests. These are areas for future checkout work.
+Checkout posts one `OrderRequest` to `/api/orders/place`. The backend saves customer details and line items, assigns the order date and reference, and updates inventory in its existing transaction. The bag is cleared only after success, and `/orders` displays saved `OrderResponse` records. The API currently exposes store-wide order history without authentication. Concurrent stock updates are not protected with inventory locks.
 
 Demo prices are curated INR prices, not live retailer quotations. Product imagery comes from external catalogs and retained sample assets; review image usage rights before publishing a commercial storefront. Local database snapshots, credentials, installed dependencies, and build output are excluded from Git.

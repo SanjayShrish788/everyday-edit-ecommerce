@@ -61,7 +61,7 @@ Example request body:
 
 Use an actual product ID with sufficient stock. The service calculates totals from persisted prices. Quantity or stock failures currently raise runtime exceptions; they do not have a dedicated validation-error response contract.
 
-The frontend bag confirmation does not currently call this endpoint. Deleting an order removes history and line items; it does not restore stock.
+The frontend checkout calls this endpoint with customer name, email, and product quantities. The server assigns `orderId`, `orderDate`, and `status`; the Orders page shows these alongside `customerName`, `email`, and the returned item totals. Deleting an order removes history and line items; it does not restore stock.
 
 ## Reachability
 

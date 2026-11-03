@@ -57,9 +57,21 @@ export const AppProvider = ({ children }) => {
     try {
       const response = await axios.get("/products");
       setData(response.data);
+      setIsError("");
     } catch (error) {
       setIsError(error.message);
     }
+  };
+
+  /** Persists quantity changes so the bag badge and checkout remain in sync. */
+  const setCartQuantity = (productId, quantity) => {
+    setCart((current) =>
+      current.map((item) =>
+        item.id === productId
+          ? { ...item, quantity: Math.max(1, quantity) }
+          : item,
+      ),
+    );
   };
 
   /** Clears shared bag state; the persistence effect mirrors it to localStorage. */
@@ -86,6 +98,7 @@ export const AppProvider = ({ children }) => {
         removeFromCart,
         refreshData,
         clearCart,
+        setCartQuantity,
       }}
     >
       {children}

@@ -55,6 +55,9 @@ export default function Navbar({ onSearch }) {
           />
           <kbd>⌕</kbd>
         </form>
+        <Link className="orders-link" to="/orders">
+          Orders
+        </Link>
         <Link className="add-link" to="/add_product">
           <FiPlus /> Add product
         </Link>

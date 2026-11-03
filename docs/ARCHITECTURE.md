@@ -22,7 +22,7 @@ Images use the entity's `@Lob` field and PostgreSQL large objects. Image metadat
 
 A transaction alone does not prevent two simultaneous requests from reading the same stock. There is currently no explicit optimistic or pessimistic inventory locking. Deleting an order cascades to its line items but does not restock products.
 
-The current cart confirmation handler is a legacy flow that calls product update endpoints directly. It is separate from the backend order service and is not an atomic order or a payment flow.
+The cart loads current catalog prices and stock while retaining persisted bag IDs and quantities. Checkout collects customer name and email, then posts one `OrderRequest` with product IDs and quantities to `/orders/place`. The backend assigns the date and reference. A successful response clears the bag and opens `/orders`; a failed request preserves the bag and displays an error. The Orders page renders saved `OrderResponse` fields and line totals. It is currently store-wide history rather than authenticated customer-specific history. No payment is collected.
 
 ## Configuration and data lifecycle
 
