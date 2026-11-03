@@ -8,10 +8,9 @@ import { AppProvider } from "./Context/Context.jsx";
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     {/* <Router> */}
-      <AppProvider>
-        <App />
-      </AppProvider>
+    <AppProvider>
+      <App />
+    </AppProvider>
     {/* </Router> */}
-  </React.StrictMode>
+  </React.StrictMode>,
 );
-

@@ -7,41 +7,51 @@ const AppContext = createContext({
   cart: [],
   addToCart: (product) => {},
   removeFromCart: (productId) => {},
-  refreshData:() =>{},
-  updateStockQuantity: (productId, newQuantity) =>{}
-  
+  refreshData: () => {},
+  updateStockQuantity: (productId, newQuantity) => {},
 });
+
+/** Shares catalog data and the browser-persisted bag across routed screens. */
 
 export const AppProvider = ({ children }) => {
   const [data, setData] = useState([]);
   const [isError, setIsError] = useState("");
-  const [cart, setCart] = useState(JSON.parse(localStorage.getItem('cart')) || []);
+  const [cart, setCart] = useState(
+    JSON.parse(localStorage.getItem("cart")) || [],
+  );
 
+  /** Adds one unit or increments a line; this does not reserve database stock. */
 
   const addToCart = (product) => {
-    const existingProductIndex = cart.findIndex((item) => item.id === product.id);
+    const existingProductIndex = cart.findIndex(
+      (item) => item.id === product.id,
+    );
     if (existingProductIndex !== -1) {
       const updatedCart = cart.map((item, index) =>
         index === existingProductIndex
           ? { ...item, quantity: item.quantity + 1 }
-          : item
+          : item,
       );
       setCart(updatedCart);
-      localStorage.setItem('cart', JSON.stringify(updatedCart));
+      localStorage.setItem("cart", JSON.stringify(updatedCart));
     } else {
       const updatedCart = [...cart, { ...product, quantity: 1 }];
       setCart(updatedCart);
-      localStorage.setItem('cart', JSON.stringify(updatedCart));
+      localStorage.setItem("cart", JSON.stringify(updatedCart));
     }
   };
 
+  /** Removes a whole bag line by product ID. */
+
   const removeFromCart = (productId) => {
-    console.log("productID",productId)
+    console.log("productID", productId);
     const updatedCart = cart.filter((item) => item.id !== productId);
     setCart(updatedCart);
-    localStorage.setItem('cart', JSON.stringify(updatedCart));
-    console.log("CART",cart)
+    localStorage.setItem("cart", JSON.stringify(updatedCart));
+    console.log("CART", cart);
   };
+
+  /** Reloads the catalog through the API and exposes request failures. */
 
   const refreshData = async () => {
     try {
@@ -52,20 +62,32 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  const clearCart =() =>{
+  /** Clears shared bag state; the persistence effect mirrors it to localStorage. */
+
+  const clearCart = () => {
     setCart([]);
-  }
-  
+  };
+
   useEffect(() => {
     refreshData();
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cart));
+    localStorage.setItem("cart", JSON.stringify(cart));
   }, [cart]);
-  
+
   return (
-    <AppContext.Provider value={{ data, isError, cart, addToCart, removeFromCart,refreshData, clearCart  }}>
+    <AppContext.Provider
+      value={{
+        data,
+        isError,
+        cart,
+        addToCart,
+        removeFromCart,
+        refreshData,
+        clearCart,
+      }}
+    >
       {children}
     </AppContext.Provider>
   );

@@ -11,7 +11,7 @@ import React, { useContext, useState, useEffect } from "react";
 //   const [totalPrice, setTotalPrice] = useState(0);
 //   const [cartImage, setCartImage] =useState([])
 //   const [showModal, setShowModal] = useState(false);
-  
+
 //   // useEffect(() => {
 //   //   const fetchImagesAndUpdateCart = async () => {
 //   //     console.log("Cart", cart);
@@ -35,7 +35,7 @@ import React, { useContext, useState, useEffect } from "react";
 //   //     );
 //   //     const filteredCartItems = updatedCartItems.filter((item) => item.available);
 //   //     setCartItems(updatedCartItems);
-     
+
 //   //   };
 
 //   //   if (cart.length) {
@@ -46,7 +46,7 @@ import React, { useContext, useState, useEffect } from "react";
 //   useEffect(() => {
 //     const fetchImagesAndUpdateCart = async () => {
 //       try {
-    
+
 //         const response = await axios.get(`${API_BASE_URL}/products`);
 //         const backendProductIds = response.data.map((product) => product.id);
 
@@ -72,7 +72,7 @@ import React, { useContext, useState, useEffect } from "react";
 //         setCartItems(cartItemsWithImages);
 //       } catch (error) {
 //         console.error("Error fetching product data:", error);
-    
+
 //       }
 //     };
 
@@ -80,8 +80,6 @@ import React, { useContext, useState, useEffect } from "react";
 //       fetchImagesAndUpdateCart();
 //     }
 //   }, [cart]);
-  
-
 
 //   useEffect(() => {
 //     console.log("CartItems", cartItems);
@@ -98,7 +96,6 @@ import React, { useContext, useState, useEffect } from "react";
 //     setTotalPrice(total);
 //   }, [cartItems]);
 
- 
 //   const handleIncreaseQuantity = (itemId) => {
 //     const newCartItems = cartItems.map((item) =>
 //       item.id === itemId ? { ...item, quantity: item.quantity + 1 } : item
@@ -125,17 +122,17 @@ import React, { useContext, useState, useEffect } from "react";
 //       for (const item of cartItems) {
 //         const { imageUrl, imageName, imageData, imageType, quantity, ...rest } = item;
 //         const updatedStockQuantity = item.stockQuantity - item.quantity;
-  
+
 //         const updatedProductData = { ...rest, stockQuantity: updatedStockQuantity };
 //         console.log("updated product data", updatedProductData)
-  
+
 //         const cartProduct = new FormData();
 //         cartProduct.append("imageFile", cartImage);
 //         cartProduct.append(
 //           "product",
 //           new Blob([JSON.stringify(updatedProductData)], { type: "application/json" })
 //         );
-  
+
 //         await axios
 //           .put(`${API_BASE_URL}/product/${item.id}`, cartProduct, {
 //             headers: {
@@ -144,7 +141,7 @@ import React, { useContext, useState, useEffect } from "react";
 //           })
 //           .then((response) => {
 //             console.log("Product updated successfully:", (cartProduct));
-            
+
 //           })
 //           .catch((error) => {
 //             console.error("Error updating product:", error);
@@ -156,7 +153,7 @@ import React, { useContext, useState, useEffect } from "react";
 //       console.log("error during checkout", error);
 //     }
 //   };
-  
+
 //   return (
 //     <div className="cart-container">
 //       <div className="shopping-cart">
@@ -255,49 +252,53 @@ import React, { useContext, useState, useEffect } from "react";
 
 // export default Cart;
 
-
-
-
-
 import React, { useContext, useState, useEffect } from "react";
 import AppContext from "../Context/Context";
 import axios from "axios";
 import CheckoutPopup from "./CheckoutPopup";
-import { Button } from 'react-bootstrap';
+import { Button } from "react-bootstrap";
+
+/** Displays API-backed bag images and the current inventory-update checkout. */
 
 const Cart = () => {
-  const { cart, removeFromCart , clearCart } = useContext(AppContext);
+  const { cart, removeFromCart, clearCart } = useContext(AppContext);
   const [cartItems, setCartItems] = useState([]);
   const [totalPrice, setTotalPrice] = useState(0);
   const [cartImage, setCartImage] = useState([]);
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
+    /** Excludes deleted products and attaches browser image URLs to bag lines. */
     const fetchImagesAndUpdateCart = async () => {
       console.log("Cart", cart);
       try {
         const response = await axios.get(`${API_BASE_URL}/products`);
         const backendProductIds = response.data.map((product) => product.id);
 
-        const updatedCartItems = cart.filter((item) => backendProductIds.includes(item.id));
+        const updatedCartItems = cart.filter((item) =>
+          backendProductIds.includes(item.id),
+        );
         const cartItemsWithImages = await Promise.all(
           updatedCartItems.map(async (item) => {
             try {
               const response = await axios.get(
                 `${API_BASE_URL}/product/${item.id}/image`,
-                { responseType: "blob" }
+                { responseType: "blob" },
               );
-              const imageFile = await converUrlToFile(response.data, response.data.imageName);
-              setCartImage(imageFile)
+              const imageFile = await converUrlToFile(
+                response.data,
+                response.data.imageName,
+              );
+              setCartImage(imageFile);
               const imageUrl = URL.createObjectURL(response.data);
               return { ...item, imageUrl };
             } catch (error) {
               console.error("Error fetching image:", error);
               return { ...item, imageUrl: "placeholder-image-url" };
             }
-          })
+          }),
         );
-        console.log("cart",cart)
+        console.log("cart", cart);
         setCartItems(cartItemsWithImages);
       } catch (error) {
         console.error("Error fetching product data:", error);
@@ -312,15 +313,19 @@ const Cart = () => {
   useEffect(() => {
     const total = cartItems.reduce(
       (acc, item) => acc + item.price * item.quantity,
-      0
+      0,
     );
     setTotalPrice(total);
   }, [cartItems]);
 
+  /** Wraps image bytes in a File for the existing multipart checkout flow. */
+
   const converUrlToFile = async (blobData, fileName) => {
     const file = new File([blobData], fileName, { type: blobData.type });
     return file;
-  }
+  };
+
+  /** Caps displayed quantity at the stock captured for this bag line. */
 
   const handleIncreaseQuantity = (itemId) => {
     const newCartItems = cartItems.map((item) => {
@@ -335,16 +340,19 @@ const Cart = () => {
     });
     setCartItems(newCartItems);
   };
-  
+
+  /** Keeps displayed quantity at a minimum of one. */
 
   const handleDecreaseQuantity = (itemId) => {
     const newCartItems = cartItems.map((item) =>
       item.id === itemId
         ? { ...item, quantity: Math.max(item.quantity - 1, 1) }
-        : item
+        : item,
     );
     setCartItems(newCartItems);
   };
+
+  /** Removes the line from shared bag state and this screen. */
 
   const handleRemoveFromCart = (itemId) => {
     removeFromCart(itemId);
@@ -352,22 +360,30 @@ const Cart = () => {
     setCartItems(newCartItems);
   };
 
+  /** Updates stock using separate product requests, then clears the bag. This legacy flow does not call /orders/place, collect payment, or create an atomic order transaction. */
+
   const handleCheckout = async () => {
     try {
       for (const item of cartItems) {
-        const { imageUrl, imageName, imageData, imageType, quantity, ...rest } = item;
+        const { imageUrl, imageName, imageData, imageType, quantity, ...rest } =
+          item;
         const updatedStockQuantity = item.stockQuantity - item.quantity;
-  
-        const updatedProductData = { ...rest, stockQuantity: updatedStockQuantity };
-        console.log("updated product data", updatedProductData)
-  
+
+        const updatedProductData = {
+          ...rest,
+          stockQuantity: updatedStockQuantity,
+        };
+        console.log("updated product data", updatedProductData);
+
         const cartProduct = new FormData();
         cartProduct.append("imageFile", cartImage);
         cartProduct.append(
           "product",
-          new Blob([JSON.stringify(updatedProductData)], { type: "application/json" })
+          new Blob([JSON.stringify(updatedProductData)], {
+            type: "application/json",
+          }),
         );
-  
+
         await axios
           .put(`${API_BASE_URL}/product/${item.id}`, cartProduct, {
             headers: {
@@ -375,7 +391,7 @@ const Cart = () => {
             },
           })
           .then((response) => {
-            console.log("Product updated successfully:", (cartProduct));
+            console.log("Product updated successfully:", cartProduct);
           })
           .catch((error) => {
             console.error("Error updating product:", error);
@@ -406,7 +422,6 @@ const Cart = () => {
                   style={{ display: "flex", alignContent: "center" }}
                   key={item.id}
                 >
-                 
                   <div>
                     <img
                       src={item.imageUrl}
@@ -475,9 +490,7 @@ const Cart = () => {
         handleCheckout={handleCheckout}
       />
     </div>
-
   );
 };
 
 export default Cart;
-
