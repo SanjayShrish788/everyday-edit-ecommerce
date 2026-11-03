@@ -40,8 +40,11 @@ for entry in entries:
         if not mime.startswith('image/'): raise ValueError('Not an image: '+url)
         entry['_asset']=(blob,mime)
         (assets/(str(entry.get('id',entry['name'].replace(' ','-')))+(mimetypes.guess_extension(mime) or '.img'))).write_bytes(blob)
+# Match names rather than legacy numeric IDs: a fresh database may assign different IDs.
+legacy_names = {1: 'iPhone 14', 4: 'Dell XPS 13', 5: 'Levi Jeans', 6: 'Lego Set', 7: 'Colgate Toothpaste'}
 for entry in entries:
-    old=next((p for p in existing if p['id']==entry.get('id') or p['name']==entry['name']),None)
+    names = {entry['name'], legacy_names.get(entry.get('id'))}
+    old=next((p for p in existing if p['name'] in names),None)
     product={k:v for k,v in (old or {}).items() if k not in ('imageData','imageName','imageType')}
     product.update({k:v for k,v in entry.items() if k not in ('source','image','asset','_asset')})
     product.setdefault('stockQuantity',30); product.setdefault('releaseDate','2026-01-01T00:00:00.000+00:00'); product['productAvailable']=product['stockQuantity']>0

@@ -6,7 +6,7 @@
 python catalog-maintenance/update_catalog.py
 ```
 
-The default API root is `http://localhost:8081/api`. Set `CATALOG_API_URL` to use a different development instance. The script updates matching legacy IDs or product names and creates missing entries; new rows let PostgreSQL generate their IDs. It preserves stock for matching entries and initializes new entries with 30 units. Legacy ID matching assumes the original demonstration database, so use a fresh or known development catalog rather than unrelated production data.
+The default API root is `http://localhost:8081/api`. Set `CATALOG_API_URL` to use a different development instance. The script updates matching product names or known legacy name aliases and creates missing entries; new rows let PostgreSQL generate their IDs. It preserves stock for matching entries and initializes new entries with 30 units. Run against a known development catalog because matching names are deliberately updated.
 
 All replacement assets are downloaded before product writes begin. Writes then occur one request at a time, not as a single transaction. If a request fails, preceding updates may already be committed; re-running updates matching records instead of duplicating the added catalog names.
 
