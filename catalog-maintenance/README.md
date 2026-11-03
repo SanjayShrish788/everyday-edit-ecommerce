@@ -1,14 +1,23 @@
-# Everyday Edit catalog maintenance
+# Catalog maintenance
 
-The catalog is stored in the local PostgreSQL `sanjay` database. Product image bytes are stored as PostgreSQL large objects by the existing Spring API, not as remote image URLs or browser-only data.
+`update_catalog.py` loads a 13-product demonstration catalog through the existing Spring product API. It uses Python 3's standard library and requires the backend, PostgreSQL, and Internet access for product imagery.
 
-- `catalog-before.json`: original API snapshot, including original image bytes.
+```powershell
+python catalog-maintenance/update_catalog.py
+```
+
+The default API root is `http://localhost:8081/api`. Set `CATALOG_API_URL` to use a different development instance. The script updates matching legacy IDs or product names and creates missing entries; new rows let PostgreSQL generate their IDs. It preserves stock for matching entries and initializes new entries with 30 units. Legacy ID matching assumes the original demonstration database, so use a fresh or known development catalog rather than unrelated production data.
+
+All replacement assets are downloaded before product writes begin. Writes then occur one request at a time, not as a single transaction. If a request fails, preceding updates may already be committed; re-running updates matching records instead of duplicating the added catalog names.
+
+Product image bytes are stored as PostgreSQL large objects, not as remote links or browser-only data. Prices are curated INR storefront prices rather than live retailer quotations.
+
+Local outputs are ignored by Git:
+
+- `catalog-before.json`: first original API snapshot, including original image bytes. An existing snapshot is retained across re-runs.
 - `catalog-after.json`: updated product metadata.
-- `update_catalog.py`: repeatable update via http://localhost:8081/api. Matches existing product IDs or names to avoid duplicate additions.
 - `images/`: downloaded replacement assets.
 
-Prices are curated INR storefront prices, not live retailer quotations. Existing stock quantities are preserved; new catalog entries start with 30 units.
+Image references: [DummyJSON](https://dummyjson.com/products), [LEGO product imagery](https://lego.bricksmegastore.com/products/lego-disney-up-house), and [Colgate twin pack imagery](https://southstardrug.com.ph/products/colgate-triple-action-buy-2-at-p159-toothpaste-175-g). Original phone and jeans images are retained; the phone is named to match the pictured Pro model. Review asset usage rights before commercial use.
 
-Image references: DummyJSON product catalog (https://dummyjson.com/products), LEGO product imagery (https://lego.bricksmegastore.com/products/lego-disney-up-house), and Colgate twin pack imagery (https://southstardrug.com.ph/products/colgate-triple-action-buy-2-at-p159-toothpaste-175-g). Original phone and jeans images are retained; the phone name now correctly identifies the pictured Pro model.
-
-Verified through a separate PostgreSQL connection: 13 committed product rows with nonempty stored image data. All 13 image endpoints returned successfully. No backend source or schema changes were made.
+Database snapshots are backups only; the script does not automatically restore them. A repository clone does not contain the live PostgreSQL database.
