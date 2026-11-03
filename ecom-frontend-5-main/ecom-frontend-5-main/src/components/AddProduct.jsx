@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../axios";
 // eslint-disable-next-line no-unused-vars
 import React, { useState } from "react";
 import axios from "axios";
@@ -35,7 +36,7 @@ const AddProduct = () => {
     );
 
     axios
-      .post("http://localhost:8081/api/product", formData, {
+      .post(`${API_BASE_URL}/product`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },

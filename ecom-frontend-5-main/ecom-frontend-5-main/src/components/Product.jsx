@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../axios";
 import { useNavigate, useParams } from "react-router-dom";
 import { useContext, useEffect } from "react";
 import { useState } from "react";
@@ -16,7 +17,7 @@ const Product = () => {
     const fetchProduct = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:8081/api/product/${id}`
+          `${API_BASE_URL}/product/${id}`
         );
         setProduct(response.data);
         if (response.data.imageName) {
@@ -29,7 +30,7 @@ const Product = () => {
 
     const fetchImage = async () => {
       const response = await axios.get(
-        `http://localhost:8081/api/product/${id}/image`,
+        `${API_BASE_URL}/product/${id}/image`,
         { responseType: "blob" }
       );
       setImageUrl(URL.createObjectURL(response.data));
@@ -40,7 +41,7 @@ const Product = () => {
 
   const deleteProduct = async () => {
     try {
-      await axios.delete(`http://localhost:8081/api/product/${id}`);
+      await axios.delete(`${API_BASE_URL}/product/${id}`);
       removeFromCart(id);
       console.log("Product deleted successfully");
       alert("Product deleted successfully");
