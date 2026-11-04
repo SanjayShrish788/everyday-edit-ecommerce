@@ -26,8 +26,9 @@ import java.util.List;
    .anyRequest().hasRole("ADMIN"));
   h.httpBasic(c->c.authenticationEntryPoint((req,res,e)->res.sendError(401)));h.sessionManagement(c->c.sessionCreationPolicy(SessionCreationPolicy.STATELESS));return h.build();
  }
- @Bean CorsConfigurationSource cors(@Value("${app.frontend-origin}") String origin){
+ @Bean CorsConfigurationSource corsConfigurationSource(@Value("${app.frontend-origin}") String origin){
   if(!origin.matches("https://[a-zA-Z0-9-]+\\.vercel\\.app" )&&!origin.equals("http://localhost:3000"))throw new IllegalArgumentException("Exact Vercel origin required");
   var c=new CorsConfiguration();c.setAllowedOrigins(List.of(origin));c.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));c.setAllowedHeaders(List.of("Authorization","Content-Type","X-Requested-With"));var s=new UrlBasedCorsConfigurationSource();s.registerCorsConfiguration("/**",c);return s;
  }
 }
+
