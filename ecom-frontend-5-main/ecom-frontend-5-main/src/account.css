@@ -1,0 +1,13 @@
+.store-account{width:min(1280px,90%);margin:18px auto;padding:14px 20px;border:1px solid #dedfd5;border-radius:10px;background:#f1f2e9;color:#293e31;height:auto;min-height:0;position:relative;display:block}
+.store-account summary{display:flex;align-items:center;justify-content:space-between;gap:16px;cursor:pointer;font-weight:600;list-style:none;font-size:14px}
+.store-account summary span{font-size:12px;font-weight:400}
+.store-account form{display:flex;align-items:flex-end;flex-wrap:wrap;gap:16px;padding-top:20px;margin:0}
+.store-account label{display:flex;flex-direction:column;gap:6px;font-size:12px;flex:1 1 180px;margin:0}
+.store-account input{width:100%;min-height:42px;border:1px solid #cbd0c2;border-radius:6px;background:#fff;padding:8px 12px;color:#23352a;font:inherit;font-size:14px}
+.store-account input:focus-visible,.store-account button:focus-visible,.store-account summary:focus-visible{outline:2px solid #61734b;outline-offset:3px}
+.store-account-actions,.store-account-session{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.store-account button{border:1px solid #293e31;background:#293e31;color:#fff;border-radius:6px;padding:11px 16px;font:inherit;font-size:13px;cursor:pointer;min-height:42px}
+.store-account-actions button+button{background:transparent;color:#293e31}
+.store-account small{flex-basis:100%;font-size:12px;color:#64705e}
+.store-account [role=alert]{margin:12px 0 0;color:#9a3030;font-size:13px}
+@media(max-width:600px){.store-account{padding:14px}.store-account summary{align-items:flex-start;flex-direction:column;gap:4px}.store-account-actions{width:100%}.store-account-actions button{flex:1}}
