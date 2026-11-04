@@ -1,7 +1,7 @@
 import { API_BASE_URL } from "../axios";
 // eslint-disable-next-line no-unused-vars
 import React, { useState } from "react";
-import axios from "axios";
+import axios from "../axios";
 
 /** Creates catalog entries with metadata and a separately uploaded image. */
 

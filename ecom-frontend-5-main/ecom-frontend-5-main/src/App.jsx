@@ -1,3 +1,4 @@
+import Account from './Account';
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
 import "./storefront.css";
@@ -15,7 +16,7 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   return (
     <BrowserRouter>
-      <Navbar onSearch={setSearchQuery} />
+      <Navbar onSearch={setSearchQuery} /><Account />
       <Routes>
         <Route path="/" element={<Home searchQuery={searchQuery} />} />
         <Route path="/add_product" element={<AddProduct />} />

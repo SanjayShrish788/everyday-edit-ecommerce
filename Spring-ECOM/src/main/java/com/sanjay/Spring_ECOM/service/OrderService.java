@@ -37,13 +37,14 @@ public class OrderService {
      * does not lock inventory rows against concurrent checkout requests.
      */
     @Transactional
-    public OrderResponse placeOrder(OrderRequest request) {
+    public OrderResponse placeOrder(OrderRequest request, String username) {
 
-        Order order = new Order();
+        if(request.items()==null||request.items().isEmpty()||request.items().size()>100||request.customerName()==null||request.customerName().isBlank()||request.email()==null||!request.email().contains("@")) throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST);
+        Order order = new Order();order.setOwnerUsername(username);
 
         String orderId = "ORD" +
                 UUID.randomUUID().toString()
-                        .substring(0, 8).toUpperCase();
+                        .replace("-", "").toUpperCase();
 
         order.setOrderId(orderId);
         order.setCustomerName(request.customerName());
@@ -60,12 +61,12 @@ public class OrderService {
                         "Quantity must be greater than zero");
             }
 
-            Product product = productRepo.findById(
+            Product product = productRepo.findLockedById(
                             (long) itemReq.productId())
                     .orElseThrow(() ->
                             new RuntimeException("Product not found"));
 
-            if (product.getStockQuantity() < itemReq.quantity()) {
+            if (!product.isProductAvailable() || product.getStockQuantity() < itemReq.quantity()) {
                 throw new RuntimeException(
                         "Insufficient stock for product: "
                                 + product.getName());
@@ -115,9 +116,9 @@ public class OrderService {
 
     /** Maps order items while the read transaction keeps lazy relationships accessible. */
     @Transactional(readOnly = true)
-    public List<OrderResponse> getAllOrderResponses() {
+    public List<OrderResponse> getAllOrderResponses(String username, boolean admin) {
 
-        List<Order> orders = orderRepo.findAll();
+        List<Order> orders = admin ? orderRepo.findAll() : orderRepo.findAll().stream().filter(o -> username.equals(o.getOwnerUsername())).toList();
         List<OrderResponse> orderResponses = new ArrayList<>();
 
         for (Order order : orders) {

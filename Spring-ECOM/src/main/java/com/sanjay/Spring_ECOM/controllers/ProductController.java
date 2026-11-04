@@ -16,7 +16,7 @@ import java.util.List;
 /** Multipart catalog API; metadata and image uploads are separate request parts. */
 @RestController
 @RequestMapping("/api")
-@CrossOrigin
+
 public class ProductController {
 
     @Autowired
@@ -49,6 +49,7 @@ public class ProductController {
             @RequestPart("imageFile") MultipartFile imageFile) {
 
         try {
+            product.setId(null);
             Product savedProduct =
                     productService.addOrUpdateProduct(product, imageFile);
 

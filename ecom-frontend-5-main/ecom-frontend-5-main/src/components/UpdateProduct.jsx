@@ -1,7 +1,7 @@
 import { API_BASE_URL } from "../axios";
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import axios from "axios";
+import axios from "../axios";
 
 /** Edits an existing catalog entry using the product ID in the route. */
 

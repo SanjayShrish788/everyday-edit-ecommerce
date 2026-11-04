@@ -13,6 +13,7 @@ import java.util.List;
 
 /** Catalog persistence operations shared by the product HTTP endpoints. */
 @Service
+@org.springframework.transaction.annotation.Transactional
 public class ProductService {
 
     @Autowired

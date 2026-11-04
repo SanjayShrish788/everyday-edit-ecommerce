@@ -28,6 +28,7 @@ public class Product{
     private String imageName;
     private String imageType;
     // PostgreSQL stores these bytes as a large object; keep reads inside a transaction.
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @Lob
     private byte[] imageData;
 }

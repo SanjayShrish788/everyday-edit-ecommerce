@@ -1,0 +1,1 @@
+const u=new URL(process.env.VITE_API_BASE_URL||'');if(u.protocol!=='https:'||u.hostname==='localhost'||u.username||u.password)throw Error('Set a public HTTPS VITE_API_BASE_URL');

@@ -19,6 +19,7 @@ public class Order {
     @Column(unique = true)
     private String orderId;
 
+    private String ownerUsername;
     private String customerName;
 
     private String email;

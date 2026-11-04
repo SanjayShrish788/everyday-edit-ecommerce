@@ -15,7 +15,7 @@ import java.util.List;
 /** HTTP adapters for order creation, history, and deletion. */
 @RestController
 @RequestMapping("/api")
-@CrossOrigin
+
 public class OrderController {
 
     @Autowired
@@ -24,20 +24,20 @@ public class OrderController {
     /** Delegates inventory validation and order persistence to the transactional service. */
     @PostMapping("/orders/place")
     public ResponseEntity<OrderResponse> placeOrder(
-            @RequestBody OrderRequest orderRequest) {
+            @RequestBody OrderRequest orderRequest, org.springframework.security.core.Authentication auth) {
 
         OrderResponse orderResponse =
-                orderService.placeOrder(orderRequest);
+                orderService.placeOrder(orderRequest, auth.getName());
 
         return new ResponseEntity<>(orderResponse, HttpStatus.CREATED);
     }
 
     /** Lists response DTOs instead of serializing bidirectional JPA relationships. */
     @GetMapping("/orders")
-    public ResponseEntity<List<OrderResponse>> getAllOrders() {
+    public ResponseEntity<List<OrderResponse>> getAllOrders(org.springframework.security.core.Authentication auth) {
 
         List<OrderResponse> orderResponseList =
-                orderService.getAllOrderResponses();
+                orderService.getAllOrderResponses(auth.getName(), auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")));
 
         return new ResponseEntity<>(
                 orderResponseList, HttpStatus.OK);
